@@ -1,46 +1,48 @@
-class MarvelService {
-  _apiBase = "https://marvel-server-zeta.vercel.app/";
-  _apiKey = "apikey=d4eecb0c66dedbfae4eab45d312fc1df";
+import { useHttp } from "../hooks/http.hook";
 
-  getResourse = async (url) => {
-    let res = await fetch(url);
-    if (!res.ok) {
-      throw new Error(`Could not fetch ${url}, status: ${res.status}`);
-    }
+const MarvelService = () => {
+  const { request, loading, error } = useHttp(); // вызов с ()
+  const _apiBase = "https://marvel-server-zeta.vercel.app/";
+  const _apiKey = "apikey=d4eecb0c66dedbfae4eab45d312fc1df";
 
-    return await res.json();
+  const getAllComics = async () => {
+    const res = await request(`${_apiBase}comics?${_apiKey}`);
+    return res.data.results;
   };
 
-  getAll = () => {
-    return this.getResourse(
-      "https://marvel-server-zeta.vercel.app/characters?apikey=d4eecb0c66dedbfae4eab45d312fc1df"
-    );
+  const getComic = async (id) => {
+    const res = await request(`${_apiBase}comics/${id}?${_apiKey}`);
+    return res.data.results;
   };
 
-  getAllCharacters = async () => {
-    const res = await this.getResourse(
-      `${this._apiBase}/characters?${this._apiKey}`
-    );
-    return res.data.results.map(this._transformCharacter);
+  const getAllCharacters = async () => {
+    const res = await request(`${_apiBase}characters?${_apiKey}`);
+    return res.data.results.map(_transformCharacter);
   };
 
-  getCharacter = async (id) => {
-    const res = await this.getResourse(
-      `${this._apiBase}characters/${id}?${this._apiKey}`
-    );
-    return this._transformCharacter(res.data.results[0]);
+  const getCharacter = async (id) => {
+    const res = await request(`${_apiBase}characters/${id}?${_apiKey}`);
+    return _transformCharacter(res.data.results[0]);
   };
 
-  _transformCharacter = (char) => {
-    return {
-      name: char.name,
-      description: char.description || "Описание отсутствует",
-      thumbnail: `${char.thumbnail.path}.${char.thumbnail.extension}`,
-      homepage: char.urls?.[0]?.url || "#",
-      wiki: char.urls?.[1]?.url || "#",
-      comics: char.comics.items,
-    };
+  const _transformCharacter = (char) => ({
+    name: char.name,
+    description: char.description || "Описание отсутствует",
+    thumbnail: `${char.thumbnail.path}.${char.thumbnail.extension}`,
+    homepage: char.urls?.[0]?.url || "#",
+    wiki: char.urls?.[1]?.url || "#",
+    comics: char.comics.items,
+    id: char.id,
+  });
+
+  return {
+    loading,
+    error,
+    getAllCharacters,
+    getCharacter,
+    getAllComics,
+    getComic,
   };
-}
+};
 
 export default MarvelService;
